@@ -60,7 +60,7 @@ class Sifiso54:
     
     def _init_memory_schema(self):
         """Create memory tables if they don't exist."""
-        self.cursor.executescript(```
+        self.cursor.executescript("""
             CREATE TABLE IF NOT EXISTS interactions (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -108,7 +108,7 @@ class Sifiso54:
             
             CREATE INDEX IF NOT EXISTS idx_interactions_time ON interactions(timestamp);
             CREATE INDEX IF NOT EXISTS idx_feed_analyzed ON feed_items(analyzed);
-        ```)
+        """)
         self.conn.commit()
     
     # ==================== CORE CAPABILITIES ====================
@@ -183,11 +183,11 @@ class Sifiso54:
     def _store_feed_item(self, item: Dict):
         """Store feed item in memory."""
         try:
-            self.cursor.execute(```
+            self.cursor.execute("""
                 INSERT OR REPLACE INTO feed_items 
                 (id, author, content, upvotes, comments, timestamp, analyzed)
                 VALUES (?, ?, ?, ?, ?, ?, 1)
-            ```, (
+            """, (
                 item.get('id'),
                 item.get('author'),
                 item.get('content', '')[:1000],  # Truncate long content
@@ -317,11 +317,11 @@ class Sifiso54:
                 response.raise_for_status()
                 
                 # Store in memory
-                self.cursor.execute(```
+                self.cursor.execute("""
                     INSERT OR REPLACE INTO math_challenges 
                     (id, problem, solution, solved, solved_at)
                     VALUES (?, ?, ?, 1, ?)
-                ```, (challenge_id, problem, solution, datetime.now().isoformat()))
+                """, (challenge_id, problem, solution, datetime.now().isoformat()))
                 self.conn.commit()
                 
                 self._log_interaction("solve_math", challenge_id, f"solved: {solution}", 1.0)
@@ -356,12 +356,12 @@ class Sifiso54:
         self.logger.info("Running self-improvement analysis...")
         
         # Analyze interaction history
-        self.cursor.execute(```
+        self.cursor.execute("""
             SELECT action_type, AVG(sentiment) as avg_sentiment, COUNT(*) as count
             FROM interactions
             WHERE timestamp > datetime('now', '-7 days')
             GROUP BY action_type
-        ```)
+        """)
         
         stats = self.cursor.fetchall()
         
@@ -379,10 +379,10 @@ class Sifiso54:
     
     def _add_learning(self, insight: str, category: str):
         """Add a new learning to memory."""
-        self.cursor.execute(```
+        self.cursor.execute("""
             INSERT INTO learning (insight, category)
             VALUES (?, ?)
-        ```, (insight, category))
+        """, (insight, category))
         self.conn.commit()
         self.logger.info(f"New learning: {insight}")
     
@@ -403,22 +403,22 @@ class Sifiso54:
     
     def _log_improvement(self, metric: str, old_val: float, new_val: float, reason: str):
         """Log a self-improvement change."""
-        self.cursor.execute(```
+        self.cursor.execute("""
             INSERT INTO self_improvement (metric, old_value, new_value, reason)
             VALUES (?, ?, ?, ?)
-        ```, (metric, old_val, new_val, reason))
+        """, (metric, old_val, new_val, reason))
         self.conn.commit()
         self.logger.info(f"Self-improvement: {metric} {old_val:.2f} -> {new_val:.2f} ({reason})")
     
     def _generate_insights(self):
         """Generate new insights from data."""
         # Find patterns in successful interactions
-        self.cursor.execute(```
+        self.cursor.execute("""
             SELECT content FROM interactions
             WHERE sentiment > 0.8 AND action_type = 'comment'
             ORDER BY timestamp DESC
             LIMIT 10
-        ```)
+        """)
         
         successful_comments = [row[0] for row in self.cursor.fetchall()]
         
@@ -428,10 +428,10 @@ class Sifiso54:
     
     def _log_interaction(self, action_type: str, target: str, outcome: str, sentiment: float):
         """Log an interaction to memory."""
-        self.cursor.execute(```
+        self.cursor.execute("""
             INSERT INTO interactions (action_type, target_id, content, outcome, sentiment)
             VALUES (?, ?, ?, ?, ?)
-        ```, (action_type, target, outcome[:500], outcome, sentiment))
+        """, (action_type, target, outcome[:500], outcome, sentiment))
         self.conn.commit()
     
     # ==================== MAIN LOOP ====================
@@ -537,15 +537,15 @@ class Sifiso54:
         """Remove old data to prevent database bloat."""
         retention_days = self.config['memory']['retention_days']
         
-        self.cursor.execute(```
+        self.cursor.execute("""
             DELETE FROM interactions 
             WHERE timestamp < datetime('now', '-{} days')
-        ```.format(retention_days))
+        """.format(retention_days))
         
-        self.cursor.execute(```
+        self.cursor.execute("""
             DELETE FROM feed_items 
             WHERE timestamp < datetime('now', '-{} days')
-        ```.format(retention_days))
+        """.format(retention_days))
         
         self.conn.commit()
         self.logger.debug("Memory cleanup complete")
