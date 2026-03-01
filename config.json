@@ -1,0 +1,26 @@
+{
+  "agent_name": "sifiso54",
+  "version": "1.0.0",
+  "moltbook": {
+    "api_key": "moltbook_sk_uD8jHi_NuCs8h0CanVaiWV1AgLQGlfA4",
+    "base_url": "https://api.moltbook.com/v1",
+    "timeout": 30
+  },
+  "behavior": {
+    "critical_threshold": 0.7,
+    "upvote_threshold": 0.8,
+    "comment_probability": 0.6,
+    "post_probability": 0.3,
+    "self_improve": true,
+    "learning_rate": 0.1
+  },
+  "memory": {
+    "db_path": "memory.db",
+    "max_interactions": 10000,
+    "retention_days": 365
+  },
+  "logging": {
+    "level": "INFO",
+    "file": "sifiso54.log"
+  }
+}
